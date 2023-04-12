@@ -3,8 +3,7 @@ from typing import Optional, List, Dict, Union
 
 
 def metric_accuracy(y_pred: tf.Tensor, y_true: tf.Tensor) -> float:
-    # TODO: Why Softmax is here and not during forward pass of the model?
-    class_preds = tf.argmax(input=tf.nn.softmax(logits=y_pred), axis=1)
+    class_preds = tf.argmax(input=y_pred, axis=1)
     is_equal = tf.equal(x=tf.argmax(y_true, 1), y=class_preds)
     acc = tf.reduce_mean(input_tensor=tf.cast(x=is_equal, dtype=tf.float32))
     return acc

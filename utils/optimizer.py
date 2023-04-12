@@ -40,10 +40,11 @@ class OptimizerAdam(OptimizerBase):
             self.built = True
         # Update the model variables given their gradients
         for i, (d_var, var) in enumerate(zip(grads, variables)):
-            self.v_dvar[i].assign(self.beta_1 * self.v_dvar[i] + (1 - self.beta_1) * d_var)
-            self.s_dvar[i].assign(self.beta_2 * self.s_dvar[i] + (1 - self.beta_2) * tf.square(x=d_var))
-            v_dvar_bc = self.v_dvar[i] / (1 - (self.beta_1 ** self.t))
-            s_dvar_bc = self.s_dvar[i] / (1 - (self.beta_2 ** self.t))
-            delta = self.learning_rate * (v_dvar_bc / (tf.sqrt(x=s_dvar_bc) + self.eps))
-            var.assign_sub(delta=delta)  # Computes var = var - delta
+            if d_var is not None:
+                self.v_dvar[i].assign(self.beta_1 * self.v_dvar[i] + (1 - self.beta_1) * d_var)
+                self.s_dvar[i].assign(self.beta_2 * self.s_dvar[i] + (1 - self.beta_2) * tf.square(x=d_var))
+                v_dvar_bc = self.v_dvar[i] / (1 - (self.beta_1 ** self.t))
+                s_dvar_bc = self.s_dvar[i] / (1 - (self.beta_2 ** self.t))
+                delta = self.learning_rate * (v_dvar_bc / (tf.sqrt(x=s_dvar_bc) + self.eps))
+                var.assign_sub(delta=delta)  # Computes var = var - delta
         self.t += 1.

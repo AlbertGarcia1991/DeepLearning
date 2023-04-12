@@ -14,7 +14,9 @@ def _train_step(
         optimizer: OptimizerBase
 ) -> Tuple[float, float]:
     # Update the model state given a batch of data
-    # TODO: definition of GradientTape() and subsequent methods
+    # “Opening” the tape means that TF is going to store the operations done across the context manager. In that way
+    # we can come back to those operations and compute the derivatives of those operations in order to compute the
+    # gradients required for the backpropagation update.
     with tf.GradientTape() as tape:
         y_pred = model(x=x_batch)
         batch_loss = loss(y_pred=y_pred, y_true=y_batch)
@@ -82,9 +84,6 @@ def train_model(
             batch_loss, batch_acc = _validation_step(x_batch=x_batch, y_batch=y_batch, loss=loss, acc=acc, model=model)
             batch_losses_val.append(batch_loss)
             batch_accs_val.append(batch_acc)
-
-            if log_flag and step % 200 == 0:
-                print(f"Test loss (for one batch) at step {step} / {len(val_Xy)}: {batch_loss:.4f}")
 
         # Keep track of epoch-level model performance
         train_losses.append(tf.reduce_mean(input_tensor=batch_losses_train))

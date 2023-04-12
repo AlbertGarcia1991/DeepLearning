@@ -3,27 +3,14 @@ from datasets.io_datasets import get_mnist
 import tensorflow as tf
 from numpy import ndarray, unique
 from typing import List, Optional, Tuple
-from utils.layer import LayerBase, DenseLayer
+from utils.layer import DenseLayer, BNLayer
 from utils.op_tensor import op_flatten_input, op_one_hot
 from utils.plot import plot_training_metrics, plot_confusion_matrix
-from utils.model import ModelBase
+from utils.model import ModelMLP
 from utils.optimizer import OptimizerAdam
 from utils.train import train_model
 from utils.metric import metric_accuracy_per_class, metric_accuracy
 from utils.loss import loss_cross_entropy
-
-
-class ModelMLP(tf.Module, ABC, ModelBase):
-    def __init__(self, layers: List[LayerBase], name: Optional[str] = None):
-        """
-        Initialize ModelMLP with the list of layers. Each item inside the given list contains each layer as a DenseLayer
-        object.
-
-        Args:
-            layers: List of DenseLayers to build the ModelMLP model.
-        """
-        super().__init__(name=name)
-        self.layers = layers
 
 
 def preprocess(X_train: ndarray, y_train: ndarray, X_test: ndarray, y_test: ndarray
@@ -58,7 +45,8 @@ if __name__ == "__main__":
     output_dims = 10
 
     mlp_layers = [DenseLayer(out_dims=out_layer_dims, activation=tf.nn.relu) for out_layer_dims in hidden_layers_dims]
-    mlp_layers.append(DenseLayer(out_dims=output_dims, activation=tf.nn.relu))
+    mlp_layers.append(BNLayer(out_dims=hidden_layers_dims[-1]))
+    mlp_layers.append(DenseLayer(out_dims=output_dims, activation=tf.nn.relu, soft_max_flag=True))
     mlp_model = ModelMLP(layers=mlp_layers)
 
     optimizer = OptimizerAdam()
@@ -71,7 +59,7 @@ if __name__ == "__main__":
         acc=metric_accuracy,
         optimizer=optimizer,
         batch_size=-1,
-        epochs=2
+        epochs=10
     )
 
     y_pred = mlp_model(X_test)
