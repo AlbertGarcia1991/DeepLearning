@@ -1,0 +1,5 @@
+*.idx3-ubyte
+*.idx1-ubyte
+*.pyc
+env_deeplearning/
+.idea/
