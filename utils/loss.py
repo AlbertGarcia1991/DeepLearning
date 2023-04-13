@@ -1,6 +1,36 @@
 import tensorflow as tf
 
 
+def loss_rmse(y_pred: tf.Tensor, y_true: tf.Tensor) -> float:
+    """
+    Compute root-mean squared error loss.
+
+    Args:
+        y_pred: Output array containing the predicted values.
+        y_true: Output array containing the (ground) true values.
+
+    Returns:
+        loss: Computer loss value.
+    """
+    loss = tf.sqrt(x=tf.reduce_mean(input_tensor=tf.square(x=y_true - y_pred)))
+    return loss
+
+
+def loss_mse(y_pred: tf.Tensor, y_true: tf.Tensor) -> float:
+    """
+    Compute root-mean squared error loss.
+
+    Args:
+        y_pred: Output array containing the predicted values.
+        y_true: Output array containing the (ground) true values.
+
+    Returns:
+        loss: Computer loss value.
+    """
+    loss = tf.reduce_mean(input_tensor=tf.square(x=y_true - y_pred))
+    return loss
+
+
 def loss_sparse_cross_entropy(y_pred: tf.Tensor, y_true: tf.Tensor) -> float:
     """
     Compute cross-entropy loss with a sparse operation. This means that labels must have length [batch_size] and dtype

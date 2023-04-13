@@ -47,13 +47,13 @@ class DenseLayer(tf.Module, ABC, LayerBase):
                 initial_value=init_weights_xavier(shape=(self.in_dims, self.out_dims)),
                 dtype=tf.float32,
                 trainable=self.trainable,
-                name="weight"
+                name="a"
             )
             self.b = tf.Variable(
                 initial_value=tf.zeros(shape=(self.out_dims,)),
                 dtype=tf.float32,
                 trainable=self.trainable,
-                name="bias"
+                name="b"
             )
             self.built = True
         out = self._forward(x=x)
