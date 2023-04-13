@@ -68,7 +68,7 @@ class DenseLayer(tf.Module, ABC, LayerBase):
 
 
 class BNLayer(tf.Module, ABC, LayerBase):
-    def __init__(self, out_dims: int, eps: float = 1e-5, momentum: float = 0.9, trainable: bool = False):
+    def __init__(self, out_dims: int, eps: float = 1e-5, momentum: float = 0.9, trainable: bool = True):
         LayerBase.__init__(self, out_dims=out_dims, trainable=trainable)
         self.eps = eps
         self.momentum = momentum
@@ -76,8 +76,10 @@ class BNLayer(tf.Module, ABC, LayerBase):
     def _true_fn(self) -> Tuple[tf.Tensor, tf.Tensor]:
         # Update moving_mean and moving_variance
         self.moving_mean.assign(value=self.moving_mean * self.momentum + self.batch_mean * (1 - self.momentum))
-        self.moving_variance.assign(value=self.moving_variance * self.momentum + self.batch_var * (1 - self.momentum))
-        return batch_mean, batch_var
+        self.moving_variance.assign(
+            value=self.moving_variance * self.momentum + self.batch_variance * (1 - self.momentum)
+        )
+        return self.batch_mean, self.batch_variance
 
     def _false_fn(self) -> Tuple[tf.Tensor, tf.Tensor]:
         return self.moving_mean, self.moving_variance

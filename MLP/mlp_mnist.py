@@ -44,11 +44,15 @@ if __name__ == "__main__":
     ]
     output_dims = 10
 
+    # We can either use custom LayerBase objects or directly load tf.keras off-the-shelf layers. Example:
+    #   mlp_layers.append(tf.keras.layers.Dense(units=10, activation=tf.keras.activation.softmax))
     mlp_layers = [DenseLayer(out_dims=out_layer_dims, activation=tf.nn.relu) for out_layer_dims in hidden_layers_dims]
     mlp_layers.append(BNLayer(out_dims=hidden_layers_dims[-1]))
     mlp_layers.append(DenseLayer(out_dims=output_dims, activation=tf.nn.relu, soft_max_flag=True))
     mlp_model = ModelMLP(layers=mlp_layers)
 
+    # However, custom optimizers are not wrapped around Keras optimizers, thus, loading a tf.keras.optimizer object
+    # will not work
     optimizer = OptimizerAdam()
 
     train_losses, train_accs, val_losses, val_accs = train_model(
@@ -58,7 +62,7 @@ if __name__ == "__main__":
         loss=loss_cross_entropy,
         acc=metric_accuracy,
         optimizer=optimizer,
-        batch_size=-1,
+        batch_size=1000,
         epochs=10
     )
 
