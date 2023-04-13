@@ -38,33 +38,31 @@ class ModelMLP(tf.Module, ABC, ModelBase):
         self.layers = layers
 
 
-class ModelLinearRegression:
+class ModelPolynomialRegression:
     def __init__(
             self,
+            order: int,
             learning_rate: float = 1e-2,
-            loss: Callable = loss_mse,
+            loss: Callable = tf.losses.mean_squared_error,
             name: Optional[str] = None,
             hist: bool = True
     ):
+        self.order = order
         self.name = name
         self.learning_rate = learning_rate
         self.loss = loss
         self.hist = hist
-        self.a = tf.Variable(0.)
-        self.b = tf.Variable(0.)
+        self.coefficients = [tf.Variable(0., dtype=tf.float32) for _ in range(order + 1)]
         self.built = False
         if self.hist:
-            self.a_hist = []
-            self.b_hist = []
+            self.coefficients_hist = [[] for _ in range(order + 1)]
             self.grads_hist = []
             self.loss_hist = []
 
     def reset(self) -> NoReturn:
-        self.a = tf.Variable(0.)
-        self.b = tf.Variable(0.)
+        self.coefficients = [tf.Variable(0., dtype=tf.float32) for _ in range(self.order + 1)]
         if self.hist:
-            self.a_hist = []
-            self.b_hist = []
+            self.coefficients_hist = [[] for _ in range(self.order + 1)]
             self.grads_hist = []
             self.loss_hist = []
         self.built = False
@@ -74,21 +72,21 @@ class ModelLinearRegression:
         y_train = tf.cast(x=y_train, dtype=tf.float32)
         for step in range(epochs):
             with tf.GradientTape() as tape:
-                y_pred = self.a * x_train + self.b
-                loss = self.loss(y_pred=y_pred, y_true=y_train)
-            grads = tape.gradient(target=loss, sources=[self.a, self.b])
-            self.a.assign_sub(grads[0] * self.learning_rate)
-            self.b.assign_sub(grads[1] * self.learning_rate)
+                y_pred = sum([self.coefficients[i] * (x_train ** i) for i in range(self.order + 1)])
+                loss_val = self.loss(y_pred=y_pred, y_true=y_train)
+            grads = tape.gradient(target=loss_val, sources=self.coefficients)
+            for idx, grad in enumerate(grads):
+                self.coefficients[idx].assign_sub(grad * self.learning_rate)
             if self.hist:
+                for idx, coef in enumerate(self.coefficients):
+                    self.coefficients_hist[idx].append(coef)
                 self.grads_hist.append(grads)
-                self.a_hist.append(self.a)
-                self.b_hist.append(self.b)
-                self.loss_hist.append(loss)
+                self.loss_hist.append(loss_val)
         self.built = True
 
     def __call__(self, x: tf.Tensor) -> tf.Tensor:
         if self.built:
-            return self.a * x + self.b
+            return sum([self.coefficients[i] * (x ** i) for i in range(self.order + 1)])
         else:
             raise ValueError("Cannot run inference until the model has been fit")
 
