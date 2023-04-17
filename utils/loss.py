@@ -116,6 +116,24 @@ def loss_cross_entropy(y_pred: tf.Tensor, y_true: tf.Tensor) -> tf.Tensor:
     return loss
 
 
+def loss_binary_cross_entropy(y_true: tf.Tensor, y_pred: tf.Tensor, eps: float = 1e-7) -> tf.Tensor:
+    """
+    Compute binary cross-entropy loss.
+
+    Args:
+        y_true: A tensor of true labels, shape (batch_size, 1).
+        y_pred: A tensor of predicted probabilities, shape (batch_size, 1).
+        eps: A small constant for numerical stability.
+
+    Returns:
+        loss: A scalar representing the binary cross-entropy loss.
+    """
+    y_true = tf.cast(y_true, dtype=tf.float32)
+    y_pred = tf.clip_by_value(y_pred, clip_value_min=eps, clip_value_max=1.0 - eps)
+    loss = -(y_true * tf.math.log(y_pred) + (1.0 - y_true) * tf.math.log(1.0 - y_pred))
+    return tf.reduce_mean(loss)
+
+
 def loss_kl_divergence(y_pred: tf.Tensor, y_true: tf.Tensor, eps: float = 1e-8) -> tf.Tensor:
     """
     Compute the Kullback-Leibler divergence, which measures the difference between two probability distributions.

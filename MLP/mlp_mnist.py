@@ -61,7 +61,7 @@ if __name__ == "__main__":
     ]
 
     bns = [False, True]
-    bss = [1, 16, 64, 512, 1024, -1]
+    bss = [124, 512, 1024, -1]
 
     for idx1, opt in enumerate(opts):
         for idx2, bn_flag in enumerate(bns):

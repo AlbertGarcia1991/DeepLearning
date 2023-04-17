@@ -74,7 +74,7 @@ def train_model(
     if batch_size == -1:
         batch_size = len(train_Xy)
     train_Xy = train_Xy.batch(batch_size=batch_size)
-    val_Xy = val_Xy.batch(batch_size=batch_size)
+    val_Xy = val_Xy.batch(batch_size=len(val_Xy))  # Validation does not require batch processing
 
     # Format training loop and begin training
     for epoch in range(epochs):
