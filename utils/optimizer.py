@@ -186,7 +186,6 @@ class OptimizerRMSprop(OptimizerBase):
         super().__init__(learning_rate=learning_rate)
         self.name = "rmsprop"
         self.decay_rate = decay_rate
-        self.epsilon = epsilon
         self.s_dvar = []
 
     def update_step(self, gradient: List[tf.Tensor], variable: List[tf.Variable]) -> NoReturn:

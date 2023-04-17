@@ -66,7 +66,7 @@ if __name__ == "__main__":
     for idx1, opt in enumerate(opts):
         for idx2, bn_flag in enumerate(bns):
             for idx3, bs in enumerate(bss):
-                current_iter = idx3 + idx * len(bns) + idx1 * len(opts)
+                current_iter = idx3 + idx2 * len(bns) + idx1 * len(opts)
                 print(f"Current iteration: {current_iter} / {len(opts) * len(bns) * len(bss)}")
 
                 # We can either use custom LayerBase objects or directly load tf.keras off-the-shelf layers. Example:
