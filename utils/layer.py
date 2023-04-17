@@ -1,7 +1,9 @@
 from abc import ABC
-import tensorflow as tf
-from utils.initialization import init_weights_xavier
 from typing import Callable, Optional, Tuple
+
+import tensorflow as tf
+
+from utils.initialization import init_weights_xavier
 
 
 class LayerBase:

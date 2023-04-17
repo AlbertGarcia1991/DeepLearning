@@ -1,6 +1,7 @@
+from typing import Tuple
+
 import idx2numpy
 from numpy import ndarray
-from typing import Tuple
 
 
 def get_mnist() -> Tuple[ndarray, ndarray, ndarray, ndarray]:

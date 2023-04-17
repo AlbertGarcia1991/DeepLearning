@@ -1,6 +1,8 @@
 from abc import ABC
-import tensorflow as tf
 from typing import Callable
+
+import tensorflow as tf
+
 from utils.model import ModelBase
 
 

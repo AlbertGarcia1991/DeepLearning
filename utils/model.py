@@ -1,6 +1,8 @@
-import tensorflow as tf
 from abc import ABC
-from typing import Optional, List, Callable, NoReturn
+from typing import Callable, List, NoReturn, Optional
+
+import tensorflow as tf
+
 from utils.layer import LayerBase
 from utils.loss import loss_mse
 
@@ -89,4 +91,3 @@ class ModelPolynomialRegression:
             return sum([self.coefficients[i] * (x ** i) for i in range(self.order + 1)])
         else:
             raise ValueError("Cannot run inference until the model has been fit")
-

@@ -1,5 +1,6 @@
+from typing import Dict, List, Optional, Union
+
 import tensorflow as tf
-from typing import Optional, List, Dict, Union
 
 
 def metric_accuracy(y_pred: tf.Tensor, y_true: tf.Tensor) -> float:

@@ -1,6 +1,7 @@
-from numpy import ndarray, unique
 from typing import Optional, Union
+
 import tensorflow as tf
+from numpy import ndarray, unique
 
 
 def op_flatten_input(X: ndarray) -> tf.Tensor:

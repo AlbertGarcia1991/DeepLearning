@@ -1,16 +1,19 @@
+import pickle
 from abc import ABC
-from datasets.io_datasets import get_mnist
+from typing import List, Optional, Tuple
+
 import tensorflow as tf
 from numpy import ndarray, unique
-from typing import List, Optional, Tuple
-from utils.layer import DenseLayer, BNLayer
-from utils.op_tensor import op_flatten_input, op_one_hot
-from utils.plot import plot_training_metrics, plot_confusion_matrix
-from utils.model import ModelMLP
-from utils.optimizer import OptimizerAdam
-from utils.train import train_model
-from utils.metric import metric_accuracy_per_class, metric_accuracy
+
+from datasets.io_datasets import get_mnist
+from utils.layer import BNLayer, DenseLayer
 from utils.loss import loss_cross_entropy
+from utils.metric import metric_accuracy, metric_accuracy_per_class
+from utils.model import ModelMLP
+from utils.op_tensor import op_flatten_input, op_one_hot
+from utils.optimizer import *
+from utils.plot import plot_confusion_matrix, plot_training_metrics
+from utils.train import train_model
 
 
 def preprocess(X_train: ndarray, y_train: ndarray, X_test: ndarray, y_test: ndarray
@@ -39,38 +42,77 @@ if __name__ == "__main__":
     test_Xy = tf.data.Dataset.from_tensor_slices((X_test, y_test))
 
     hidden_layers_dims = [
-        700,
         500,
+        200,
+        100,
     ]
     output_dims = 10
 
-    # We can either use custom LayerBase objects or directly load tf.keras off-the-shelf layers. Example:
-    #   mlp_layers.append(tf.keras.layers.Dense(units=10, activation=tf.keras.activation.softmax))
-    mlp_layers = [DenseLayer(out_dims=out_layer_dims, activation=tf.nn.relu) for out_layer_dims in hidden_layers_dims]
-    mlp_layers.append(BNLayer(out_dims=hidden_layers_dims[-1]))
-    mlp_layers.append(DenseLayer(out_dims=output_dims, activation=tf.nn.relu, soft_max_flag=True))
-    mlp_model = ModelMLP(layers=mlp_layers)
+    # Custom optimizers are not wrapped around Keras optimizers, thus, loading a tf.keras.optimizer object will not work
+    opts = [
+        OptimizerAdam(),
+        OptimizerSGD(),
+        OptimizerNadam(),
+        OptimizerAdaBound(),
+        OptimizerAdaGrad(),
+        OptimizerNAG(),
+        OptimizerRMSprop(),
+        OptimizerSGDMomentum()
+    ]
 
-    # However, custom optimizers are not wrapped around Keras optimizers, thus, loading a tf.keras.optimizer object
-    # will not work
-    optimizer = OptimizerAdam()
+    bns = [False, True]
+    bss = [1, 16, 64, 512, 1024, -1]
 
-    train_losses, train_accs, val_losses, val_accs = train_model(
-        model=mlp_model,
-        train_Xy=train_Xy,
-        val_Xy=test_Xy,
-        loss=loss_cross_entropy,
-        acc=metric_accuracy,
-        optimizer=optimizer,
-        batch_size=1000,
-        epochs=10
-    )
+    for idx1, opt in enumerate(opts):
+        for idx2, bn_flag in enumerate(bns):
+            for idx3, bs in enumerate(bss):
+                current_iter = idx3 + idx * len(bns) + idx1 * len(opts)
+                print(f"Current iteration: {current_iter} / {len(opts) * len(bns) * len(bss)}")
 
-    y_pred = mlp_model(X_test)
+                # We can either use custom LayerBase objects or directly load tf.keras off-the-shelf layers. Example:
+                #   mlp_layers.append(tf.keras.layers.Dense(units=10, activation=tf.keras.activation.softmax))
+                mlp_layers = [
+                    DenseLayer(out_dims=out_layer_dims, activation=tf.nn.relu) for out_layer_dims in hidden_layers_dims
+                ]
+                if bn_flag:
+                    mlp_layers.append(
+                        BNLayer(out_dims=hidden_layers_dims[-1])
+                    )
+                mlp_layers.append(DenseLayer(out_dims=output_dims, activation=tf.nn.relu, soft_max_flag=True))
+                mlp_model = ModelMLP(layers=mlp_layers)
 
-    plot_training_metrics(train_losses, val_losses, "Cross-Entropy Loss")
-    plot_training_metrics(train_accs, val_accs, "Accuracy")
-    metric_accuracy_per_class(n_classes=n_classes, y_true=y_test, y_pred=y_pred, print_flag=True)
-    plot_confusion_matrix(y_true=y_test, y_pred=y_pred, n_classes=n_classes)
+                train_losses, train_accs, val_losses, val_accs, train_model_wbs = train_model(
+                    model=mlp_model,
+                    train_Xy=train_Xy,
+                    val_Xy=test_Xy,
+                    loss=loss_cross_entropy,
+                    acc=metric_accuracy,
+                    optimizer=opt,
+                    batch_size=bs,
+                    epochs=1000,
+                    early_stop=["acc", 1520, 1]
+                )
 
-    # TODO: Hidden layers inspection tools
+                y_pred = mlp_model(X_test)
+
+                loss_plot = plot_training_metrics(train_losses, val_losses, "Cross-Entropy Loss", return_flag=True)
+                acc_plot = plot_training_metrics(train_accs, val_accs, "Accuracy", return_flag=True)
+                cm = metric_accuracy_per_class(n_classes=n_classes, y_true=y_test, y_pred=y_pred, print_flag=False)
+                cm_plot = plot_confusion_matrix(y_true=y_test, y_pred=y_pred, n_classes=n_classes)
+
+                filename = f"EXP{current_iter}-OPT_{opt.name}-BS_{bs}-BN_{bn_flag}.pkl"
+                with open(filename, "wb") as f:
+                    obj = {
+                        "model": mlp_model,
+                        "train_model_wbs": train_model_wbs,
+                        "optimizer": opt,
+                        "batch_size": bs,
+                        "batch_norm_flag": bn_flag,
+                        "cm": cm,
+                        "plot": {
+                            "loss": loss_plot,
+                            "acc": acc_plot,
+                            "cm_plot": cm_plot
+                        }
+                    }
+                    pickle.dump(obj=obj, file=f)

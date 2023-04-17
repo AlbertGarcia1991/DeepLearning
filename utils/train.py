@@ -1,7 +1,10 @@
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import tensorflow as tf
+from numpy import array, ndarray
+
 from utils.model import ModelBase
 from utils.optimizer import OptimizerBase
-from typing import Callable, Tuple, List, Union
 
 
 @tf.function
@@ -23,8 +26,7 @@ def _train_step(
     grads = tape.gradient(target=batch_loss, sources=model.variables)
     optimizer.update_step(gradient=grads, variable=model.variables)
     batch_acc = acc(y_pred=y_pred, y_true=y_batch)
-    print("\n")
-    return batch_loss, batch_acc, y_pred, grads
+    return batch_loss, batch_acc
 
 
 @tf.function
@@ -52,11 +54,11 @@ def train_model(
         batch_size: int = -1,
         epochs: int = 500,
         log_flag: bool = True,
-) -> Tuple[List[float], List[float], List[float], List[float]]:
-    # Initialize data structures
+        early_stop: Optional[Tuple[str, int, float]] = None
+) -> Tuple[List[float], List[float], List[float], List[float], ndarray]:
     train_losses, train_accs = [], []
     val_losses, val_accs = [], []
-    train_y_preds, train_grads, train_model_wbs = [], [], []
+    train_model_wbs = []
 
     """
     Batching the dataset creates a tuple with N elements, where element contains the batch size number of elements of 
@@ -76,40 +78,64 @@ def train_model(
 
     # Format training loop and begin training
     for epoch in range(epochs):
-        batch_losses_train, batch_accs_train = [], []
-        batch_losses_val, batch_accs_val = [], []
+        train_batch_losses, train_batch_accs = [], []
+        val_batch_losses, val_batch_accs = [], []
+        train_model_wbs_ = None
 
         # Iterate over the training data; X_batch and y_batch have a shape [BS, len(shape_input_array)]
         for step, (X_batch, y_batch) in enumerate(train_Xy):
             # Compute gradients and update the model's parameters
-            batch_loss, batch_acc, y_pred, grads = _train_step(
+            batch_loss, batch_acc = _train_step(
                 X_batch=X_batch, y_batch=y_batch, loss=loss, acc=acc, model=model, optimizer=optimizer
             )
-            # Keep track of batch-level training performance and model variables and gradient updates
-            train_y_preds.append(y_pred)
-            train_grads.append(grads)
-            batch_losses_train.append(batch_loss)
-            train_model_wbs.append(model.variables)
-            batch_accs_train.append(batch_acc)
+            # Keep track of batch-level training performance and model variables
+            train_batch_losses.append(batch_loss)
+            train_batch_accs.append(batch_acc)
+            if train_model_wbs_ is None:
+                train_model_wbs_ = array(
+                    [model.trainable_variables[i].numpy() for i in range(len(model.trainable_variables))], dtype=object)
+            else:
+                train_model_wbs_ += array(
+                    [model.trainable_variables[i].numpy() for i in range(len(model.trainable_variables))], dtype=object)
 
-            # Log every 200 batches.
-            if log_flag and step % 200 == 0:
+            if log_flag and step % 200 == 0:  # Log every 200 batches.
                 print(f"Training loss for batch {step + 1} / {len(train_Xy)}: {batch_loss:.4f}")
+
+        train_model_wbs.append(train_model_wbs_ / (step + 1))
 
         # Iterate over the validation data
         for step, (X_batch, y_batch) in enumerate(val_Xy):
             batch_loss, batch_acc = _validation_step(X_batch=X_batch, y_batch=y_batch, loss=loss, acc=acc, model=model)
-            batch_losses_val.append(batch_loss)
-            batch_accs_val.append(batch_acc)
+            val_batch_losses.append(batch_loss)
+            val_batch_accs.append(batch_acc)
 
         # Keep track of epoch-level model performance
-        train_losses.append(tf.reduce_mean(input_tensor=batch_losses_train))
-        train_accs.append(tf.reduce_mean(input_tensor=batch_accs_train))
-        val_losses.append(tf.reduce_mean(input_tensor=batch_losses_val))
-        val_accs.append(tf.reduce_mean(input_tensor=batch_accs_val))
+        train_losses.append(tf.reduce_mean(input_tensor=train_batch_losses))
+        train_accs.append(tf.reduce_mean(input_tensor=train_batch_accs))
+        val_losses.append(tf.reduce_mean(input_tensor=val_batch_losses))
+        val_accs.append(tf.reduce_mean(input_tensor=val_batch_accs))
+
+        # Early stop implementation
+        if early_stop is not None:
+            computed_delta = None
+            metric = early_stop[0].lower()
+            patience = early_stop[1]
+            min_delta = early_stop[2] / 100
+            early_stop_flag = False
+            if len(val_losses) >= patience:
+                if metric == "accuracy" or metric == "acc":
+                    computed_delta = (val_accs[-1] - val_accs[-patience]) / val_accs[-patience]
+                if metric == "loss":
+                    computed_delta = -(val_losses[-1] - val_losses[-patience]) / val_losses[-patience]
+                if computed_delta is not None and computed_delta < min_delta:
+                    early_stop_flag = True
+            if early_stop_flag:
+                print(f"Early stop after patience of {patience} epochs checking metric: {metric}")
+                break
 
         if log_flag:
-            print(f"Epoch: {epoch}")
+            print(f"Epoch {epoch + 1} / {epochs}")
             print(f"Training loss: {train_losses[-1]:.3f}, Training accuracy: {train_accs[-1]:.3f}")
-            print(f"Validation loss: {val_losses[-1]:.3f}, Validation accuracy: {val_accs[-1]:.3f}")
-    return train_losses, train_accs, val_losses, val_accs
+            print(f"Validation loss: {val_losses[-1]:.3f}, Validation accuracy: {val_accs[-1]:.3f}\n\n")
+
+    return train_losses, train_accs, val_losses, val_accs, array(train_model_wbs)

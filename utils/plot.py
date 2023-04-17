@@ -1,13 +1,17 @@
 from typing import List
-import tensorflow as tf
-import sklearn.metrics as sk_metrics
-import seaborn as sns
-import matplotlib.pyplot as plt
+
 import matplotlib
+import matplotlib.pyplot as plt
+import seaborn as sns
+import sklearn.metrics as sk_metrics
+import tensorflow as tf
+
 matplotlib.use('TkAgg')
 
 
-def plot_training_metrics(train_metric: List[float], val_metric: List[float], metric_type: str):
+def plot_training_metrics(
+        train_metric: List[float], val_metric: List[float], metric_type: str, return_flag: bool = False
+) -> plt.Figure:
     # Visualize metrics vs training Epochs
     plt.figure(figsize=(20, 10))
     plt.plot(range(len(train_metric)), train_metric, label=f"Training {metric_type}")
@@ -16,10 +20,14 @@ def plot_training_metrics(train_metric: List[float], val_metric: List[float], me
     plt.ylabel(metric_type)
     plt.legend()
     plt.title(f"{metric_type} vs Training epochs")
+    if return_flag:
+        return plt
     plt.show()
 
 
-def plot_confusion_matrix(y_pred: tf.Tensor, y_true: tf.Tensor, n_classes: int, norm: bool = True):
+def plot_confusion_matrix(
+        y_pred: tf.Tensor, y_true: tf.Tensor, n_classes: int, norm: bool = True, return_flag: bool = False
+) -> plt.Figure:
     plt.figure(figsize=(n_classes, n_classes))
     confusion = sk_metrics.confusion_matrix(
         tf.argmax(y_pred, axis=1).numpy(),
@@ -35,4 +43,6 @@ def plot_confusion_matrix(y_pred: tf.Tensor, y_true: tf.Tensor, n_classes: int, 
     plt.title("Confusion matrix")
     plt.ylabel("True label")
     plt.xlabel("Predicted label")
+    if return_flag:
+        return plt
     plt.show()
