@@ -21,9 +21,9 @@ Nesterov Accelerated Gradient (NAG)
     - When to use: Similar to Momentum but with better convergence.
 
 Adagrad
-    - Pros: Adapts learning rate per parameter; suitable for sparse data.
+    - Pros: Adapts learning rate per parameter; suitable for sparse quell_gestures.
     - Cons: Learning rate can become too small and stop model from learning; sensitive to initial learning rate.
-    - When to use: For sparse data and convex problems.
+    - When to use: For sparse quell_gestures and convex problems.
 
 RMSprop
     - Pros: Adapts learning rate per parameter; less aggressive update than Adagrad.
@@ -62,7 +62,7 @@ class OptimizerBase:
 class OptimizerSGD(OptimizerBase):
     """
     A simple and widely used optimization algorithm that updates model weights using gradients calculated from a
-    randomly selected subset (mini-batch) of the training data.
+    randomly selected subset (mini-batch) of the training quell_gestures.
     """
     def __init__(self, learning_rate: float = 1e-3):
         super().__init__(learning_rate=learning_rate)
@@ -125,7 +125,7 @@ class OptimizerNAG(OptimizerBase):
 class OptimizerAdaGrad(OptimizerBase):
     """
     An adaptive learning rate method that adjusts the learning rate for each parameter based on the sum of the squared
-    gradients, helping with sparse data and learning features with different scales.
+    gradients, helping with sparse quell_gestures and learning features with different scales.
     """
     def __init__(self, learning_rate: float = 1e-2):
         super().__init__(learning_rate=learning_rate)

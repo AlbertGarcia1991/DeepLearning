@@ -159,7 +159,7 @@ def loss_triplet(anchor: tf.Tensor, positive: tf.Tensor, negative: tf.Tensor, ma
     Compute the triplet loss. It compares a baseline input to positive input and a negative input. The distance between
     the baseline input and the positive input is reduced to the minimum, while the distance between the baseline input
     and the negative input is maximized. Is commonly used in anomaly-detection applications and for similarity learning
-    tasks, it is designed to learn a distance metric between data points. It is often used for tasks like face
+    tasks, it is designed to learn a distance metric between quell_gestures points. It is often used for tasks like face
     recognition and image retrieval.
 
     Args:
@@ -181,8 +181,8 @@ def loss_contrastive(y_true: tf.Tensor, y_pred: tf.Tensor, margin: float = 1.0) 
     """
     Compute the contrastive loss. It takes the output of the network for a positive example and calculates its distance
     to an example of the same class and contrasts that with the distance to negative examples. Mainly used on siamese
-    networks and unsupervised algorithms. Also used for similarity learning tasks, it encourages similar data points to
-    have similar representations and dissimilar data points to have different representations.
+    networks and unsupervised algorithms. Also used for similarity learning tasks, it encourages similar quell_gestures points to
+    have similar representations and dissimilar quell_gestures points to have different representations.
 
     Args:
         y_pred: Output array containing the predicted values.

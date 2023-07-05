@@ -16,7 +16,7 @@ def _train_step(
         model: Union[tf.Module, ModelBase],
         optimizer: OptimizerBase
 ) -> Tuple[float, float]:
-    # Update the model state given a batch of data
+    # Update the model state given a batch of quell_gestures
     # “Opening” the tape means that TF is going to store the operations done across the context manager. In that way
     # we can come back to those operations and compute the derivatives of those operations in order to compute the
     # gradients required for the backpropagation update.
@@ -37,7 +37,7 @@ def _validation_step(
         acc: Callable,
         model: ModelBase
 ) -> Tuple[float, float, List[tf.Variable], List[tf.Variable]]:
-    # Evaluate the model on given a batch of validation data
+    # Evaluate the model on given a batch of validation quell_gestures
     y_pred = model(x=X_batch)
     batch_loss = loss(y_pred=y_pred, y_true=y_batch)
     batch_acc = acc(y_pred=y_pred, y_true=y_batch)
@@ -55,10 +55,9 @@ def train_model(
         epochs: int = 500,
         log_flag: bool = True,
         early_stop: Optional[Tuple[str, int, float]] = None
-) -> Tuple[List[float], List[float], List[float], List[float], ndarray]:
+) -> Tuple[List[float], List[float], List[float], List[float]]:
     train_losses, train_accs = [], []
     val_losses, val_accs = [], []
-    train_model_wbs = []
 
     """
     Batching the dataset creates a tuple with N elements, where element contains the batch size number of elements of 
@@ -80,9 +79,8 @@ def train_model(
     for epoch in range(epochs):
         train_batch_losses, train_batch_accs = [], []
         val_batch_losses, val_batch_accs = [], []
-        train_model_wbs_ = None
 
-        # Iterate over the training data; X_batch and y_batch have a shape [BS, len(shape_input_array)]
+        # Iterate over the training quell_gestures; X_batch and y_batch have a shape [BS, len(shape_input_array)]
         for step, (X_batch, y_batch) in enumerate(train_Xy):
             # Compute gradients and update the model's parameters
             batch_loss, batch_acc = _train_step(
@@ -91,19 +89,11 @@ def train_model(
             # Keep track of batch-level training performance and model variables
             train_batch_losses.append(batch_loss)
             train_batch_accs.append(batch_acc)
-            if train_model_wbs_ is None:
-                train_model_wbs_ = array(
-                    [model.trainable_variables[i].numpy() for i in range(len(model.trainable_variables))], dtype=object)
-            else:
-                train_model_wbs_ += array(
-                    [model.trainable_variables[i].numpy() for i in range(len(model.trainable_variables))], dtype=object)
 
             if log_flag and step % 200 == 0:  # Log every 200 batches.
                 print(f"Training loss for batch {step + 1} / {len(train_Xy)}: {batch_loss:.4f}")
 
-        train_model_wbs.append(train_model_wbs_ / (step + 1))
-
-        # Iterate over the validation data
+        # Iterate over the validation quell_gestures
         for step, (X_batch, y_batch) in enumerate(val_Xy):
             batch_loss, batch_acc = _validation_step(X_batch=X_batch, y_batch=y_batch, loss=loss, acc=acc, model=model)
             val_batch_losses.append(batch_loss)
@@ -138,4 +128,4 @@ def train_model(
             print(f"Training loss: {train_losses[-1]:.3f}, Training accuracy: {train_accs[-1]:.3f}")
             print(f"Validation loss: {val_losses[-1]:.3f}, Validation accuracy: {val_accs[-1]:.3f}\n\n")
 
-    return train_losses, train_accs, val_losses, val_accs, array(train_model_wbs)
+    return train_losses, train_accs, val_losses, val_accs

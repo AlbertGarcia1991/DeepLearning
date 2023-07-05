@@ -33,11 +33,16 @@ class DenseLayer(tf.Module, ABC, LayerBase):
             self,
             out_dims: int,
             weight_init: Callable = init_weights_xavier,
-            activation: Callable = tf.identity,
+            activation: Callable = tf.nn.relu,
             trainable: Optional[bool] = None,
+            bn_flag: bool = False,
+            bn_momentum: float = 0.9,
             soft_max_flag: bool = False
     ):
         LayerBase.__init__(self, out_dims=out_dims, weight_init=weight_init, activation=activation, trainable=trainable)
+        self.bn_flag = bn_flag
+        if self.bn_flag:
+            self.bn_layer = BNLayer(out_dims=out_dims, trainable=trainable, momentum=bn_momentum)
         self.soft_max_flag = soft_max_flag
 
     def __call__(self, x: tf.Tensor) -> tf.Tensor:
@@ -46,7 +51,7 @@ class DenseLayer(tf.Module, ABC, LayerBase):
         if not self.built:  # Initialize weights and biases
             self.in_dims = x.shape[1]  # Infer the input dimension based on first call
             self.w = tf.Variable(
-                initial_value=init_weights_xavier(shape=(self.in_dims, self.out_dims)),
+                initial_value=self.weight_init(shape=(self.in_dims, self.out_dims)),
                 dtype=tf.float32,
                 trainable=self.trainable,
                 name="a"
@@ -63,6 +68,8 @@ class DenseLayer(tf.Module, ABC, LayerBase):
 
     def _forward(self, x: tf.Tensor) -> tf.Tensor:
         z = tf.add(x=tf.matmul(a=x, b=self.w), y=self.b)
+        if self.bn_flag:
+            z = self.bn_layer(z)
         out = self.activation(z)
         if self.soft_max_flag:
             out = tf.nn.softmax(logits=out)

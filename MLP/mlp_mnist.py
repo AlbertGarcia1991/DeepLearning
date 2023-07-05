@@ -16,15 +16,16 @@ from utils.plot import plot_confusion_matrix, plot_training_metrics
 from utils.train import train_model
 
 
-def preprocess(X_train: ndarray, y_train: ndarray, X_test: ndarray, y_test: ndarray
-               ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor, tf.Tensor]:
+def preprocess(
+        X_train: ndarray,
+        y_train: ndarray,
+        X_test: ndarray,
+        y_test: ndarray
+) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor, tf.Tensor]:
     X_train = op_flatten_input(X=X_train)
     X_test = op_flatten_input(X=X_test)
     y_train = op_one_hot(y=y_train, n_classes=n_classes)
     y_test = op_one_hot(y=y_test, n_classes=n_classes)
-
-    X_train = X_train / 255
-    X_test = X_test / 255
 
     return X_train, y_train, X_test, y_test
 
@@ -81,7 +82,7 @@ if __name__ == "__main__":
                 mlp_layers.append(DenseLayer(out_dims=output_dims, activation=tf.nn.relu, soft_max_flag=True))
                 mlp_model = ModelMLP(layers=mlp_layers)
 
-                train_losses, train_accs, val_losses, val_accs, train_model_wbs = train_model(
+                train_losses, train_accs, val_losses, val_accs = train_model(
                     model=mlp_model,
                     train_Xy=train_Xy,
                     val_Xy=test_Xy,

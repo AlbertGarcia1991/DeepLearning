@@ -8,8 +8,8 @@ def metric_accuracy(y_pred: tf.Tensor, y_true: tf.Tensor) -> float:
         y_pred = tf.argmax(input=y_pred, axis=1, output_type=tf.int32)
     if y_true.shape[1] > 1:
         y_true = tf.argmax(input=y_true, axis=1, output_type=tf.int32)
-    y_pred = tf.cast(tf.reshape(y_pred, -1), tf.int32)
-    y_true = tf.cast(tf.reshape(y_true, -1), tf.int32)
+    # y_pred = tf.cast(tf.reshape(y_pred, -1), tf.int32)
+    # y_true = tf.cast(tf.reshape(y_true, -1), tf.int32)
     is_equal = tf.equal(x=y_true, y=y_pred)
     acc = tf.reduce_mean(input_tensor=tf.cast(x=is_equal, dtype=tf.float32))
     return acc
